@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Einlass-Scanner</title>
+
+  <script
+    src="https://unpkg.com/html5-qrcode"
+  ></script>
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+
+    .box {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.15);
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 15px 25px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+  <h1>Einlass-Scanner</h1>
+
+  <p>
+    Bitte den QR-Code des Tickets vor die Kamera halten.
+  </p>
+
+  <button onclick="startScanner()">
+    📷 Kamera starten
+  </button>
+
+  <div id="reader"></div>
+
+  <div id="result"></div>
+
+</div>
+
+
+<script>
+
+function startScanner() {
+
+  document.getElementById("result").innerHTML =
+    "Kamera wird gestartet...";
+
+  const scanner =
+    new Html5Qrcode("reader");
+
+  scanner.start(
+    {
+      facingMode: "environment"
+    },
+
+    {
+      fps: 10,
+      qrbox: 250
+    },
+
+    function(decodedText) {
+
+      document.getElementById("result").innerHTML =
+        "✅ QR-Code erkannt.";
+
+      /*
+       * Der erkannte Ticket-Link wird
+       * zunächst unverändert geöffnet.
+       */
+
+      window.location.href = decodedText;
+
+    },
+
+    function(errorMessage) {
+
+      // Scanfehler werden ignoriert,
+      // solange noch kein QR-Code erkannt wurde.
+
+    }
+
+  ).catch(function(error) {
+
+    document.getElementById("result").innerHTML =
+      "❌ Kamera konnte nicht gestartet werden.<br><br>" +
+      error;
+
+  });
+
+}
+
+</script>
+
+</body>
+
+</html>
