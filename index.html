@@ -1,32 +1,25 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>Einlass-Scanner</title>
 
-  <script
-    src="https://unpkg.com/html5-qrcode"
-  ></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
       background: #f2f2f2;
+      margin: 0;
     }
 
     .box {
       max-width: 500px;
-      margin: auto;
+      margin: 20px auto;
       background: white;
       padding: 25px;
       border-radius: 15px;
@@ -35,6 +28,12 @@
 
     h1 {
       font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.5;
     }
 
     #reader {
@@ -49,110 +48,160 @@
       border: none;
       border-radius: 10px;
       cursor: pointer;
+      background: #222;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
     }
 
     #result {
       margin-top: 20px;
       font-size: 20px;
+      line-height: 1.5;
     }
-
   </style>
-
 </head>
 
 <body>
 
-<div class="box">
+  <div class="box">
 
-  <h1>Einlass-Scanner</h1>
+    <h1>Einlass-Scanner</h1>
 
-  <p>
-    Bitte den QR-Code des Tickets vor die Kamera halten.
-  </p>
+    <p>
+      Bitte den QR-Code des Tickets vor die Kamera halten.
+    </p>
 
-  <button onclick="startScanner()">
-    📷 Kamera starten
-  </button>
+    <button id="startButton" onclick="startScanner()">
+      📷 Kamera starten
+    </button>
 
-  <div id="reader"></div>
+    <div id="reader"></div>
 
-  <div id="result"></div>
+    <div id="result"></div>
 
-</div>
+  </div>
 
 
-<script>
+  <script>
 
-function startScanner() {
+    // =====================================================
+    // ORGANISATOR-SCHLÜSSEL
+    // =====================================================
 
-  document.getElementById("result").innerHTML =
-    "Kamera wird gestartet...";
+    const scannerSecret = "RINGER2026";
 
-  const scanner =
-    new Html5Qrcode("reader");
 
-  scanner.start(
-    {
-      facingMode: "environment"
-    },
+    // =====================================================
+    // QR-SCANNER STARTEN
+    // =====================================================
 
-    {
-      fps: 10,
-      qrbox: 250
-    },
+    let scanner = null;
+    let scanInProgress = false;
 
-    function(decodedText) {
+
+    function startScanner() {
+
+      if (scanInProgress) {
+        return;
+      }
+
+      scanInProgress = true;
+
+      document.getElementById("startButton").disabled = true;
 
       document.getElementById("result").innerHTML =
-        "✅ QR-Code erkannt.";
+        "📷 Kamera wird gestartet...";
 
-      /*
-       * Der erkannte Ticket-Link wird
-       * zunächst unverändert geöffnet.
-       */
 
-      const scannerSecret =
-  new URLSearchParams(window.location.search).get("scanner");
+      scanner = new Html5Qrcode("reader");
 
-if (!scannerSecret) {
 
-  document.getElementById("result").innerHTML =
-    "❌ Kein Organisator-Schlüssel vorhanden.";
+      scanner.start(
 
-  return;
+        // Rückkamera des Smartphones verwenden
+        {
+          facingMode: "environment"
+        },
 
-}
+        // Scanner-Einstellungen
+        {
+          fps: 10,
+          qrbox: 250
+        },
 
-const separator =
-  decodedText.includes("?") ? "&" : "?";
 
-window.location.href =
-  decodedText +
-  separator +
-  "scanner=" +
-  encodeURIComponent(scannerSecret);
+        // =================================================
+        // QR-CODE ERKANNT
+        // =================================================
 
-    },
+        function(decodedText) {
 
-    function(errorMessage) {
+          document.getElementById("result").innerHTML =
+            "✅ QR-Code erkannt.<br>" +
+            "Ticket wird geprüft...";
 
-      // Scanfehler werden ignoriert,
-      // solange noch kein QR-Code erkannt wurde.
+
+          // Scanner stoppen
+          scanner.stop()
+            .catch(function(error) {
+              console.log("Scanner konnte nicht gestoppt werden:", error);
+            });
+
+
+          // Prüfen, ob der Ticket-Link bereits
+          // einen Parameter enthält
+          const separator =
+            decodedText.includes("?")
+              ? "&"
+              : "?";
+
+
+          // Organisator-Schlüssel an den
+          // Ticket-Link anhängen
+          const targetUrl =
+            decodedText +
+            separator +
+            "scanner=" +
+            encodeURIComponent(scannerSecret);
+
+
+          // Zur Apps-Script-Web-App weiterleiten
+          window.location.href = targetUrl;
+
+        },
+
+
+        // =================================================
+        // SCAN-FEHLER
+        // =================================================
+
+        function(errorMessage) {
+
+          // Normale Scanfehler werden ignoriert.
+          // Der Scanner sucht einfach weiter.
+
+        }
+
+      )
+
+      .catch(function(error) {
+
+        scanInProgress = false;
+
+        document.getElementById("startButton").disabled = false;
+
+        document.getElementById("result").innerHTML =
+          "❌ Kamera konnte nicht gestartet werden.<br><br>" +
+          error;
+
+      });
 
     }
 
-  ).catch(function(error) {
-
-    document.getElementById("result").innerHTML =
-      "❌ Kamera konnte nicht gestartet werden.<br><br>" +
-      error;
-
-  });
-
-}
-
-</script>
+  </script>
 
 </body>
-
 </html>
