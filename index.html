@@ -111,7 +111,26 @@ function startScanner() {
        * zunächst unverändert geöffnet.
        */
 
-      window.location.href = decodedText;
+      const scannerSecret =
+  new URLSearchParams(window.location.search).get("scanner");
+
+if (!scannerSecret) {
+
+  document.getElementById("result").innerHTML =
+    "❌ Kein Organisator-Schlüssel vorhanden.";
+
+  return;
+
+}
+
+const separator =
+  decodedText.includes("?") ? "&" : "?";
+
+window.location.href =
+  decodedText +
+  separator +
+  "scanner=" +
+  encodeURIComponent(scannerSecret);
 
     },
 
